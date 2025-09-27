@@ -13,7 +13,8 @@ const PORT = process.env.PORT || 5000;
 const PgSession = connectPgSimple(session);
 const sessionStore = new PgSession({
   conString: process.env.DATABASE_URL,
-  createTableIfMissing: true,
+  createTableIfMissing: false, // Don't create table if it exists
+  tableName: 'user_sessions', // Use different table name
 });
 
 // Middleware
