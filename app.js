@@ -22,9 +22,11 @@ async function signup(email, password, confirmPassword) {
         const data = await response.json();
 
         if (response.ok) {
-            showMessage('signup', 'Account created successfully! Redirecting to login...', 'success');
+            // Store user email in localStorage
+            localStorage.setItem('userEmail', email);
+            showMessage('signup', 'Account created successfully! Redirecting to dashboard...', 'success');
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = 'dashboard.html';
             }, 2000);
         } else {
             showMessage('signup', data.error || data.message || 'Signup failed', 'error');
@@ -46,6 +48,8 @@ async function login(email, password) {
         const data = await response.json();
 
         if (response.ok) {
+            // Store user email in localStorage
+            localStorage.setItem('userEmail', email);
             showMessage('login', 'Login successful! Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
@@ -76,6 +80,9 @@ async function logout() {
     } catch (error) {
         console.error('Logout network error:', error);
     } finally {
+        // Clear localStorage on logout
+        localStorage.removeItem('userEmail');
+        currentUser = null;
         window.location.href = 'login.html';
     }
 }
@@ -83,20 +90,14 @@ async function logout() {
 // Dashboard functions
 async function checkAuth() {
     console.log('[DEBUG] Starting checkAuth function...');
-    try {
-        const response = await fetch('/api/user', {
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            window.location.href = 'login.html';
-            return;
-        }
-
-        const userData = await response.json();
-        currentUser = userData.user; // Extract user from the response structure
-        document.getElementById('userInfo').textContent = currentUser.email;
-
+    
+    // Check localStorage first
+    const storedUser = localStorage.getItem('userEmail');
+    if (storedUser) {
+        console.log('[AUTH] Found stored user:', storedUser);
+        currentUser = { email: storedUser }; // Set currentUser object
+        document.getElementById('userInfo').textContent = storedUser;
+        
         // Set today's date as default
         const dateInput = document.getElementById('date');
         if (dateInput) {
@@ -105,11 +106,13 @@ async function checkAuth() {
 
         // Load steps history
         loadSteps();
-
-    } catch (error) {
-        console.error('Auth check failed:', error);
-        window.location.href = 'login.html';
+        return storedUser;
     }
+    
+    // If no stored user, redirect to login
+    console.log('[AUTH] No user found, redirecting to login');
+    window.location.href = 'login.html';
+    return null;
 }
 
 async function loadSteps() {
