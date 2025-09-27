@@ -27,7 +27,7 @@ async function signup(email, password, confirmPassword) {
                 window.location.href = 'login.html';
             }, 2000);
         } else {
-            showMessage('signup', data.message || 'Signup failed', 'error');
+            showMessage('signup', data.error || data.message || 'Signup failed', 'error');
         }
     } catch (error) {
         showMessage('signup', 'Network error. Please try again.', 'error');
@@ -51,7 +51,7 @@ async function login(email, password) {
                 window.location.href = 'dashboard.html';
             }, 1500);
         } else {
-            showMessage('login', data.message || 'Login failed', 'error');
+            showMessage('login', data.error || data.message || 'Login failed', 'error');
         }
     } catch (error) {
         showMessage('login', 'Network error. Please try again.', 'error');

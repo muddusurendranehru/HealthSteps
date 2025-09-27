@@ -20,10 +20,13 @@ export const steps = pgTable("steps", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Zod schemas for validation
+// Zod schemas for validation with proper validation rules
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).extend({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
 });
 
 export const insertStepSchema = createInsertSchema(steps).omit({

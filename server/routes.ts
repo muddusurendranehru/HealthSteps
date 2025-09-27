@@ -17,6 +17,7 @@ export function createRoutes(storage: IStorage) {
   // User registration
   router.post('/api/auth/signup', async (req, res) => {
     try {
+      console.log('[DEBUG] Signup request:', req.body);
       const userData = insertUserSchema.parse(req.body);
       
       // Check if user already exists
@@ -39,6 +40,10 @@ export function createRoutes(storage: IStorage) {
       res.json({ success: true, user: { id: user.id, email: user.email } });
     } catch (error) {
       console.error('Registration error:', error);
+      if (error.name === 'ZodError') {
+        const message = error.errors[0]?.message || 'Invalid input data';
+        return res.status(400).json({ error: message });
+      }
       res.status(400).json({ error: 'Registration failed' });
     }
   });
