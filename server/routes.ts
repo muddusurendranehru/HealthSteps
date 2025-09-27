@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertStepsSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
@@ -16,7 +17,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User already exists" });
       }
       
-      const user = await storage.createUser({ email, password });
+      // Hash password before storing
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      
+      const user = await storage.createUser({ email, password: hashedPassword });
       res.json({ id: user.id, email: user.email });
     } catch (error) {
       console.error("Signup error:", error);
@@ -29,7 +34,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = insertUserSchema.parse(req.body);
       
       const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Check if password is correct - handle both hashed and plain text passwords
+      let isPasswordValid = false;
+      
+      try {
+        // Try bcrypt compare first (for new hashed passwords)
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      } catch (error) {
+        // If bcrypt compare fails, try plain text comparison (for legacy users)
+        isPasswordValid = user.password === password;
+        
+        // If plain text password matches, hash it and update for security
+        if (isPasswordValid) {
+          const saltRounds = 10;
+          const hashedPassword = await bcrypt.hash(password, saltRounds);
+          await storage.updateUserPassword(user.id, hashedPassword);
+        }
+      }
+      
+      if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
