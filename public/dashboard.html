@@ -237,15 +237,21 @@
         // Get CSRF token for secure requests
         async function getCSRFToken() {
             try {
+                console.log('[CSRF] Fetching CSRF token...');
                 const response = await fetch('/api/csrf-token', {
                     credentials: 'include'
                 });
+                console.log('[CSRF] Response status:', response.status);
                 if (response.ok) {
                     const data = await response.json();
                     csrfToken = data.csrfToken;
+                    console.log('[CSRF] Token received:', csrfToken ? csrfToken.slice(0, 8) + '...' : 'null');
+                    console.log('[CSRF] Cookies after fetch:', document.cookie);
+                } else {
+                    console.error('[CSRF] Failed to fetch token, status:', response.status);
                 }
             } catch (error) {
-                console.error('Failed to get CSRF token:', error);
+                console.error('[CSRF] Failed to get CSRF token:', error);
             }
         }
 
@@ -339,8 +345,12 @@
             try {
                 // Ensure we have a CSRF token
                 if (!csrfToken) {
+                    console.log('[CSRF] No token found, fetching...');
                     await getCSRFToken();
                 }
+                
+                console.log('[CSRF] About to submit with token:', csrfToken ? csrfToken.slice(0, 8) + '...' : 'null');
+                console.log('[CSRF] Current cookies:', document.cookie);
                 
                 const response = await fetch('/api/steps', {
                     method: 'POST',

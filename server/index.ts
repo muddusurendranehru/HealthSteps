@@ -119,6 +119,9 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   
   if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
     console.log('[SECURITY] CSRF token validation failed for', req.method, req.originalUrl);
+    console.log('[SECURITY] Header token:', csrfHeader ? `${csrfHeader.slice(0, 8)}...` : 'missing');
+    console.log('[SECURITY] Cookie token:', csrfCookie ? `${csrfCookie.slice(0, 8)}...` : 'missing');
+    console.log('[SECURITY] Tokens match:', csrfHeader === csrfCookie);
     return res.status(403).json({ message: 'CSRF token validation failed' });
   }
   
