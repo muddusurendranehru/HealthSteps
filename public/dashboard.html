@@ -185,7 +185,7 @@
             <div class="logo">🏥 HealthStep</div>
             <div style="display: flex; align-items: center;">
                 <div class="user-info" id="userInfo">Loading...</div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button class="logout-btn" onclick="logout()" data-testid="button-logout">Logout</button>
             </div>
         </div>
 
@@ -203,7 +203,7 @@
                 <form id="addStepsForm">
                     <div class="form-group">
                         <label for="steps">Steps Count</label>
-                        <input type="number" id="steps" name="steps" min="0" max="50000" required>
+                        <input type="number" id="steps" name="steps" min="0" max="50000" required data-testid="input-steps">
                     </div>
                     
                     <div class="form-group">
@@ -211,7 +211,7 @@
                         <input type="date" id="date" name="date" required>
                     </div>
                     
-                    <button type="submit" class="btn add-btn" id="addBtn">Add Steps</button>
+                    <button type="submit" class="btn add-btn" id="addBtn" data-testid="button-submit">Save Steps</button>
                     
                     <div id="addMessage"></div>
                 </form>
@@ -257,6 +257,7 @@
 
         // Check authentication status on page load
         async function checkAuth() {
+            console.log('[DEBUG] Starting checkAuth function...');
             try {
                 const response = await fetch('/api/auth/status', {
                     credentials: 'include'
@@ -420,6 +421,7 @@
         }
 
         // Initialize page
+        console.log('[DEBUG] Dashboard script loaded, calling checkAuth...');
         checkAuth();
     </script>
 </body>
