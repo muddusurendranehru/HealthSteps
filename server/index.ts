@@ -69,13 +69,16 @@ app.use((req, res, next) => {
   res.on('finish', async () => {
     // Log healthcare-relevant activities to PostgreSQL for compliance
     if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/steps')) {
+      // Use preserved user info if session was cleared (e.g., logout)
+      const auditUser = res.locals.auditUser || req.session?.user;
+      
       const auditData = {
         ip: req.ip || req.connection.remoteAddress || null,
         userAgent: req.get('User-Agent') || null,
         method: req.method,
         path: req.path,
-        userId: req.session?.user?.id || null,
-        userEmail: req.session?.user?.email || null,
+        userId: auditUser?.id || null,
+        userEmail: auditUser?.email || null,
         statusCode: res.statusCode,
         success: res.statusCode < 400,
         sessionId: req.sessionID || null,

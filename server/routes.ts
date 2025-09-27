@@ -103,6 +103,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/logout', (req, res) => {
     console.log('Logout request - destroying session for user:', req.session.user?.email);
     const sessionId = req.sessionID;
+    
+    // Preserve user info for audit logging before destroying session
+    res.locals.auditUser = req.session.user;
+    
     req.session.destroy((err) => {
       if (err) {
         console.error('Session destruction error:', err);

@@ -385,16 +385,25 @@
                     await getCSRFToken();
                 }
                 
-                await fetch('/api/auth/logout', {
+                const response = await fetch('/api/auth/logout', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': csrfToken
                     },
                     credentials: 'include'
                 });
+                
+                if (!response.ok) {
+                    console.error('Logout failed:', response.status, response.statusText);
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Logout error details:', errorData);
+                } else {
+                    console.log('Logout successful');
+                }
             } catch (error) {
-                console.error('Logout error:', error);
+                console.error('Logout network error:', error);
             } finally {
+                // Always redirect regardless of logout success/failure for security
                 window.location.href = 'login.html';
             }
         }
