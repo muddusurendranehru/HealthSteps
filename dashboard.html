@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" class="dashboard">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HealthStep</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏥 HealthStep</div>
+            <div style="display: flex; align-items: center;">
+                <div class="user-info" id="userInfo">Loading...</div>
+                <button class="logout-btn" onclick="logout()" data-testid="button-logout">Logout</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Add Steps Card -->
+            <div class="card add-steps">
+                <div class="card-title">📊 Track Today's Steps</div>
+                
+                <div class="quick-add">
+                    <button type="button" class="quick-btn" onclick="quickAdd(5000)">5K</button>
+                    <button type="button" class="quick-btn" onclick="quickAdd(7500)">7.5K</button>
+                    <button type="button" class="quick-btn" onclick="quickAdd(10000)">10K</button>
+                </div>
+                
+                <form id="addStepsForm">
+                    <div class="form-group">
+                        <label for="steps">Steps Count</label>
+                        <input type="number" id="steps" name="steps" min="0" max="50000" required data-testid="input-steps">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" required data-testid="input-date">
+                    </div>
+                    
+                    <button type="submit" class="btn add-btn" id="addBtn" data-testid="button-save-steps">Save Steps</button>
+                    
+                    <div id="addMessage"></div>
+                </form>
+            </div>
+
+            <!-- View Steps Card -->
+            <div class="card view-steps">
+                <div class="card-title">📈 Your Step History</div>
+                
+                <div id="stepsList" class="steps-list">
+                    <div class="loading">Loading your step history...</div>
+                </div>
+                
+                <button type="button" class="btn" onclick="loadSteps()" style="margin-top: 15px;" data-testid="button-refresh-steps">Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
