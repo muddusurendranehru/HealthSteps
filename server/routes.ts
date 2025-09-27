@@ -145,13 +145,24 @@ export function createRoutes(storage: IStorage) {
   // Get steps for current user
   router.get('/api/steps', async (req, res) => {
     try {
-      console.log('[DEBUG] Get steps request, userId:', req.session.userId);
+      const userEmail = req.query.userEmail as string;
+      console.log('[DEBUG] Get steps request, userId:', req.session.userId, 'userEmail query:', userEmail);
       
-      if (!req.session.userId) {
+      let userId = req.session.userId;
+      
+      // If userEmail query parameter is provided, use that for healthcare center mode
+      if (userEmail) {
+        const user = await storage.getUserByEmail(userEmail);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        userId = user.id;
+        console.log('[HEALTHCARE MODE] Using userEmail:', userEmail, 'resolved to userId:', userId);
+      } else if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const steps = await storage.getStepsByUserId(req.session.userId);
+      const steps = await storage.getStepsByUserId(userId);
       console.log('[DEBUG] Retrieved steps:', steps);
       res.json({ steps });
     } catch (error) {

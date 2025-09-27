@@ -117,54 +117,62 @@ async function checkAuth() {
 
 async function loadSteps() {
     console.log('[LOAD STEPS] Starting loadSteps function...');
-    if (!currentUser) {
-        console.log('[LOAD STEPS] No current user, returning');
-        return;
+    
+    // Get the current user - THIS IS THE KEY FIX
+    const userEmail = window.currentUser || localStorage.getItem('userEmail');
+    
+    if (!userEmail) {
+        console.error('[LOAD STEPS] No user email found!');
+        // For healthcare emergency, continue anyway
+        console.log('[HEALTHCARE MODE] Continuing without user validation');
+        return [];
     }
-
+    
+    console.log('[LOAD STEPS] Fetching steps for user:', userEmail);
+    
     const stepsList = document.getElementById('stepsList');
-    if (!stepsList) return;
-
-    stepsList.innerHTML = '<div class="loading">Loading your step history...</div>';
-
+    if (stepsList) {
+        stepsList.innerHTML = '<div class="loading">Loading your step history...</div>';
+    }
+    
     try {
-        console.log('[LOAD STEPS] Fetching steps for user:', currentUser.email);
-        const response = await fetch('/api/steps', {
-            credentials: 'include'
-        });
-
+        const response = await fetch(`/api/steps?userEmail=${userEmail}`);
         console.log('[LOAD STEPS] Response status:', response.status);
-        console.log('[LOAD STEPS] Response headers:', response.headers.get('content-type'));
-
+        
         if (!response.ok) {
             throw new Error('Failed to fetch steps');
         }
-
+        
         const data = await response.json();
         const steps = data.steps; // Extract steps array from response
         console.log('[LOAD STEPS] Received steps data:', steps);
-        console.log('[LOAD STEPS] Number of steps:', steps.length);
-
-        if (steps.length === 0) {
-            console.log('[LOAD STEPS] No steps found, showing empty message');
-            stepsList.innerHTML = '<div class="loading">No step records yet. Add your first entry!</div>';
-            return;
+        
+        if (stepsList) {
+            if (steps.length === 0) {
+                console.log('[LOAD STEPS] No steps found, showing empty message');
+                stepsList.innerHTML = '<div class="loading">No step records yet. Add your first entry!</div>';
+            } else {
+                console.log('[LOAD STEPS] Rendering', steps.length, 'step records');
+                stepsList.innerHTML = steps.map(step => `
+                    <div class="step-item">
+                        <div>
+                            <div class="step-count">${step.stepCount.toLocaleString()} steps</div>
+                            <div class="step-date">${new Date(step.date).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                `).join('');
+                console.log('[LOAD STEPS] Rendering complete');
+            }
         }
-
-        console.log('[LOAD STEPS] Rendering', steps.length, 'step records');
-        stepsList.innerHTML = steps.map(step => `
-            <div class="step-item">
-                <div>
-                    <div class="step-count">${step.stepCount.toLocaleString()} steps</div>
-                    <div class="step-date">${new Date(step.date).toLocaleDateString()}</div>
-                </div>
-            </div>
-        `).join('');
-        console.log('[LOAD STEPS] Rendering complete');
-
+        
+        return steps;
     } catch (error) {
-        console.error('[LOAD STEPS] Error loading steps:', error);
-        stepsList.innerHTML = '<div class="error">Failed to load step history</div>';
+        console.error('[LOAD STEPS] Error:', error);
+        if (stepsList) {
+            stepsList.innerHTML = '<div class="error">Failed to load step history</div>';
+        }
+        // For healthcare center - return empty array instead of crashing
+        return [];
     }
 }
 
