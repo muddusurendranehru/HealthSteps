@@ -15,7 +15,7 @@ export function createRoutes(storage: IStorage) {
   const router = Router();
 
   // User registration
-  router.post('/api/register', async (req, res) => {
+  router.post('/api/auth/signup', async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
@@ -44,7 +44,7 @@ export function createRoutes(storage: IStorage) {
   });
 
   // User login
-  router.post('/api/login', async (req, res) => {
+  router.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password } = req.body;
       
@@ -88,7 +88,7 @@ export function createRoutes(storage: IStorage) {
   });
 
   // Logout
-  router.post('/api/logout', (req, res) => {
+  router.post('/api/auth/logout', (req, res) => {
     req.session.destroy(() => {
       res.json({ success: true });
     });
