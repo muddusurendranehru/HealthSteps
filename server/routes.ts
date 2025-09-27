@@ -102,14 +102,25 @@ export function createRoutes(storage: IStorage) {
   // Add steps
   router.post('/api/steps', async (req, res) => {
     try {
+      console.log('[DEBUG] Add steps request body:', req.body);
+      console.log('[DEBUG] Session userId:', req.session.userId);
+      
       if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      // Get user to include email
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
       }
 
       const stepData = insertStepSchema.parse({
         ...req.body,
         userId: req.session.userId,
+        userEmail: user.email,
       });
+      console.log('[DEBUG] Parsed step data:', stepData);
 
       // Check if steps already exist for this date
       const existing = await storage.getStepByUserAndDate(
@@ -134,11 +145,14 @@ export function createRoutes(storage: IStorage) {
   // Get steps for current user
   router.get('/api/steps', async (req, res) => {
     try {
+      console.log('[DEBUG] Get steps request, userId:', req.session.userId);
+      
       if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
       const steps = await storage.getStepsByUserId(req.session.userId);
+      console.log('[DEBUG] Retrieved steps:', steps);
       res.json({ steps });
     } catch (error) {
       console.error('Get steps error:', error);

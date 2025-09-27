@@ -15,7 +15,8 @@ export const users = pgTable("users", {
 export const steps = pgTable("steps", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  stepCount: integer("step_count").notNull(),
+  userEmail: varchar("user_email").notNull(), // Add required user_email field
+  stepCount: integer("steps").notNull(), // Match actual database column name
   date: date("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

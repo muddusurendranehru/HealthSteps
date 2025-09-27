@@ -93,7 +93,8 @@ async function checkAuth() {
             return;
         }
 
-        currentUser = await response.json();
+        const userData = await response.json();
+        currentUser = userData.user; // Extract user from the response structure
         document.getElementById('userInfo').textContent = currentUser.email;
 
         // Set today's date as default
@@ -125,7 +126,7 @@ async function loadSteps() {
 
     try {
         console.log('[LOAD STEPS] Fetching steps for user:', currentUser.email);
-        const response = await fetch(`/api/steps?userEmail=${encodeURIComponent(currentUser.email)}`, {
+        const response = await fetch('/api/steps', {
             credentials: 'include'
         });
 
@@ -136,7 +137,8 @@ async function loadSteps() {
             throw new Error('Failed to fetch steps');
         }
 
-        const steps = await response.json();
+        const data = await response.json();
+        const steps = data.steps; // Extract steps array from response
         console.log('[LOAD STEPS] Received steps data:', steps);
         console.log('[LOAD STEPS] Number of steps:', steps.length);
 
@@ -150,7 +152,7 @@ async function loadSteps() {
         stepsList.innerHTML = steps.map(step => `
             <div class="step-item">
                 <div>
-                    <div class="step-count">${step.steps.toLocaleString()} steps</div>
+                    <div class="step-count">${step.stepCount.toLocaleString()} steps</div>
                     <div class="step-date">${new Date(step.date).toLocaleDateString()}</div>
                 </div>
             </div>
@@ -184,9 +186,8 @@ async function addSteps(steps, date) {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-                steps: parseInt(steps),
-                date: date,
-                userEmail: currentUser.email
+                stepCount: parseInt(steps),
+                date: date
             })
         });
 
@@ -197,7 +198,7 @@ async function addSteps(steps, date) {
             document.getElementById('steps').value = '';
             loadSteps(); // Refresh the list
         } else {
-            showMessage('add', data.message || 'Failed to add steps', 'error');
+            showMessage('add', data.error || data.message || 'Failed to add steps', 'error');
         }
     } catch (error) {
         showMessage('add', 'Network error. Please try again.', 'error');
