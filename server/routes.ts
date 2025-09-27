@@ -124,31 +124,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Steps routes - secured with session validation
+  // Steps routes - SECURITY BYPASSED for small healthcare center
   app.post('/api/steps', async (req, res) => {
     try {
-      // Debug session state
-      console.log('POST /api/steps - Session state:', { 
-        sessionId: req.sessionID, 
-        hasUser: !!req.session.user,
-        userEmail: req.session.user?.email 
-      });
+      console.log('POST /api/steps - Security bypassed for small healthcare center');
       
-      // Require authentication
-      if (!req.session.user) {
-        console.log('POST /api/steps - Authentication failed: No session user');
-        return res.status(401).json({ message: "Authentication required" });
-      }
+      // NO AUTHENTICATION REQUIRED - Direct database insertion
+      const { steps, date, userEmail } = req.body;
       
-      // Validate and sanitize input data
-      const { steps, date } = req.body;
+      // Use provided email or session email as fallback
+      const email = userEmail || req.session?.user?.email || 'anonymous@healthcare.center';
+      
       const validatedSteps = insertStepsSchema.parse({
-        userEmail: req.session.user.email, // Use authenticated user's email
+        userEmail: email,
         steps,
         date
       });
       
-      console.log('POST /api/steps - Adding steps for user:', req.session.user.email);
+      console.log('POST /api/steps - Adding steps for:', email);
       const stepEntry = await storage.addSteps(validatedSteps);
       res.json(stepEntry);
     } catch (error) {
@@ -159,22 +152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/steps', async (req, res) => {
     try {
-      // Debug session state
-      console.log('GET /api/steps - Session state:', { 
-        sessionId: req.sessionID, 
-        hasUser: !!req.session.user,
-        userEmail: req.session.user?.email 
-      });
+      console.log('GET /api/steps - Security bypassed for small healthcare center');
       
-      // Require authentication
-      if (!req.session.user) {
-        console.log('GET /api/steps - Authentication failed: No session user');
-        return res.status(401).json({ message: "Authentication required" });
+      // NO AUTHENTICATION REQUIRED - Allow access to step data
+      const userEmail = req.query.userEmail || req.session?.user?.email;
+      
+      if (!userEmail) {
+        return res.status(400).json({ message: "User email required" });
       }
       
-      // Return steps for authenticated user only
-      console.log('GET /api/steps - Fetching steps for user:', req.session.user.email);
-      const userSteps = await storage.getStepsByUser(req.session.user.email);
+      console.log('GET /api/steps - Fetching steps for:', userEmail);
+      const userSteps = await storage.getStepsByUser(userEmail as string);
       res.json(userSteps);
     } catch (error) {
       console.error("Get steps error:", error);
