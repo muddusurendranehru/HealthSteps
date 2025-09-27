@@ -84,7 +84,7 @@ async function logout() {
 async function checkAuth() {
     console.log('[DEBUG] Starting checkAuth function...');
     try {
-        const response = await fetch('/api/auth/status', {
+        const response = await fetch('/api/user', {
             credentials: 'include'
         });
 
