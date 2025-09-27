@@ -1,10 +1,141 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import cookieParser from "cookie-parser";
+import crypto from "crypto";
+import { Pool } from "pg";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Trust proxy for secure cookies behind load balancer/TLS terminator
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser()); // Required for CSRF double-submit cookie pattern
+
+// PostgreSQL session store for healthcare-grade security
+const PgSession = connectPgSimple(session);
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Session middleware for server-side authentication with PostgreSQL backing
+app.use(session({
+  store: new PgSession({
+    pool: pgPool,
+    tableName: 'user_sessions', // Dedicated table for session storage
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET || (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SESSION_SECRET environment variable is required in production');
+    }
+    console.warn('Warning: Using default session secret. Set SESSION_SECRET environment variable in production.');
+    return 'healthstep-dev-secret-key-' + Math.random().toString(36);
+  })(),
+  resave: false,
+  saveUninitialized: false,
+  name: 'healthstep.sid', // Custom session name for security
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+    httpOnly: true,
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours for healthcare security
+    sameSite: 'strict' // CSRF protection
+  }
+}));
+
+// Healthcare audit logging middleware with persistent storage
+app.use((req, res, next) => {
+  // Capture original response for audit logging
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  let responseBody: any;
+  
+  res.send = function(body) {
+    responseBody = body;
+    return originalSend.call(this, body);
+  };
+  
+  res.json = function(body) {
+    responseBody = body;
+    return originalJson.call(this, body);
+  };
+  
+  res.on('finish', async () => {
+    // Log healthcare-relevant activities to PostgreSQL for compliance
+    if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/steps')) {
+      const auditData = {
+        ip: req.ip || req.connection.remoteAddress || null,
+        userAgent: req.get('User-Agent') || null,
+        method: req.method,
+        path: req.path,
+        userId: req.session?.user?.id || null,
+        userEmail: req.session?.user?.email || null,
+        statusCode: res.statusCode,
+        success: res.statusCode < 400,
+        sessionId: req.sessionID || null,
+        metadata: JSON.stringify({ 
+          responseSize: responseBody ? JSON.stringify(responseBody).length : 0,
+          userAgent: req.get('User-Agent') 
+        })
+      };
+      
+      try {
+        // Import storage here to avoid circular dependencies
+        const { storage } = await import('./storage');
+        await storage.logAuditEvent(auditData);
+      } catch (error) {
+        // Fallback to console if database logging fails (ensure audit trail)
+        console.error('[AUDIT_ERROR] Failed to log to database:', error);
+        console.log('[AUDIT_FALLBACK]', JSON.stringify(auditData));
+      }
+    }
+  });
+  
+  next();
+});
+
+// CSRF Protection - True Double Submit Cookie Pattern
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  // Skip CSRF for GET requests and auth endpoints (login/signup)
+  const isGetRequest = req.method === 'GET';
+  const isAuthEndpoint = req.originalUrl === '/api/auth/login' || req.originalUrl === '/api/auth/signup';
+  const isCsrfTokenEndpoint = req.originalUrl === '/api/csrf-token';
+  
+  if (isGetRequest || isAuthEndpoint || isCsrfTokenEndpoint) {
+    return next();
+  }
+  
+  const csrfHeader = req.headers['x-csrf-token'] as string;
+  const csrfCookie = req.cookies['csrf-token'];
+  
+  if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
+    console.log('[SECURITY] CSRF token validation failed for', req.method, req.originalUrl);
+    return res.status(403).json({ message: 'CSRF token validation failed' });
+  }
+  
+  next();
+});
+
+// Generate CSRF token endpoint (true double-submit cookie)
+app.get('/api/csrf-token', (req, res) => {
+  const token = crypto.randomBytes(32).toString('hex');
+  
+  // Set CSRF token as non-HttpOnly cookie so JavaScript can read it
+  res.cookie('csrf-token', token, {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    httpOnly: false // Must be readable by JavaScript for double-submit pattern
+  });
+  
+  res.json({ csrfToken: token });
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

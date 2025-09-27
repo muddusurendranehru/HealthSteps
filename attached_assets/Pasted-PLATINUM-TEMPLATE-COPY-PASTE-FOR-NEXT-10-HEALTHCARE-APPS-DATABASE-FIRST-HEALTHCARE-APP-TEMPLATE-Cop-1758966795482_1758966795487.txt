@@ -1,0 +1,134 @@
+PLATINUM TEMPLATE: COPY-PASTE FOR NEXT 10 HEALTHCARE APPS
+DATABASE-FIRST HEALTHCARE APP TEMPLATE
+Copy this exact prompt for Replit or Cursor:
+
+BUILD HEALTHCARE APP: DATABASE-FIRST APPROACH
+PHASE 1: DATABASE SETUP (MANDATORY FIRST STEP)
+sql-- Step 1: Create tables
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE [APP_DATA_TABLE] (
+  id SERIAL PRIMARY KEY,
+  user_email VARCHAR(255) NOT NULL,
+  [specific_columns_here],
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Step 2: Create functions
+CREATE OR REPLACE FUNCTION signup_user(p_email text, p_password text)
+RETURNS jsonb AS $$
+BEGIN
+  INSERT INTO users (email, password) VALUES (p_email, p_password);
+  RETURN jsonb_build_object('success', true, 'email', p_email);
+EXCEPTION WHEN unique_violation THEN
+  RETURN jsonb_build_object('success', false, 'message', 'Email exists');
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION login_user(p_email text, p_password text)
+RETURNS jsonb AS $$
+DECLARE
+  user_record RECORD;
+BEGIN
+  SELECT id, email INTO user_record FROM users 
+  WHERE email = p_email AND password = p_password;
+  
+  IF FOUND THEN
+    RETURN jsonb_build_object('success', true, 'user', jsonb_build_object('id', user_record.id, 'email', user_record.email));
+  ELSE
+    RETURN jsonb_build_object('success', false, 'message', 'Invalid credentials');
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Step 3: TEST BEFORE BUILDING FRONTEND
+SELECT signup_user('test@app.com', 'pass123');
+SELECT login_user('test@app.com', 'pass123');
+PHASE 2: FRONTEND (ONLY AFTER DATABASE WORKS)
+File Structure:
+app/
+├── page.tsx (homepage with signup/login buttons)
+├── signup/page.tsx (email, password, confirm fields)
+├── dashboard/page.tsx (main app functionality)
+lib/
+└── database.ts (database connection only)
+Critical Rules:
+
+Database validation on every page load - No localStorage sessions
+Server-side authentication - Frontend never trusts client data
+Column name alignment - Database → Frontend → Display must match exactly
+Error handling - Clear messages when database operations fail
+Healthcare compliance - All patient data stored in database, never browser cache
+
+Authentication Flow:
+typescript// Every protected page starts with:
+const validateUser = async () => {
+  const email = sessionStorage.getItem('user_email');
+  if (!email) {
+    router.push('/signup');
+    return null;
+  }
+  
+  // Verify user exists in database
+  const { data } = await supabase.rpc('verify_user', { p_email: email });
+  if (!data?.exists) {
+    sessionStorage.removeItem('user_email');
+    router.push('/signup');
+    return null;
+  }
+  
+  return email;
+};
+Data Operations:
+typescript// Always validate user before data operations
+const addData = async (dataParams) => {
+  const userEmail = await validateUser();
+  if (!userEmail) return;
+  
+  const { data, error } = await supabase.rpc('add_data_function', {
+    p_email: userEmail,
+    ...dataParams
+  });
+  
+  if (error) {
+    setMessage('Database error: ' + error.message);
+    return;
+  }
+  
+  // Update UI only after successful database operation
+  refreshData();
+};
+DEPLOYMENT CHECKLIST:
+
+ Database functions tested in SQL console
+ User signup/login cycle works end-to-end
+ Data operations store in database (not localStorage)
+ Session validation prevents phantom users
+ Error messages guide users properly
+ Healthcare data persists across sessions
+
+REPLACE [APP_DATA_TABLE] WITH:
+
+steps for fitness tracking
+appointments for scheduling
+medications for pharmacy apps
+vitals for health monitoring
+symptoms for patient tracking
+
+SUCCESS METRICS:
+
+Database operations work before building frontend
+Real users can complete full signup → login → use app → logout cycle
+Data persists across browser sessions
+No phantom users or cached data issues
+Professional healthcare-grade data integrity
+
+TIME LIMIT: 2 HOURS MAXIMUM
+If not working after 2 hours, restart with simpler approach.
+
+This template eliminates the 16-hour debugging cycles by enforcing database-first development and preventing localStorage authentication bypass issues that compromise healthcare data integrity.

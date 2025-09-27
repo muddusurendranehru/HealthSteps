@@ -1,4 +1,4 @@
-import { users, steps, type User, type InsertUser, type Steps, type InsertSteps } from "@shared/schema";
+import { users, steps, auditLogs, type User, type InsertUser, type Steps, type InsertSteps, type InsertAuditLog, type AuditLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 
@@ -10,6 +10,7 @@ export interface IStorage {
   addSteps(stepsData: InsertSteps): Promise<Steps>;
   getStepsByUser(userEmail: string): Promise<Steps[]>;
   getStepsByUserAndDate(userEmail: string, date: string): Promise<Steps | undefined>;
+  logAuditEvent(auditData: InsertAuditLog): Promise<AuditLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -74,6 +75,14 @@ export class DatabaseStorage implements IStorage {
       .from(steps)
       .where(and(eq(steps.userEmail, userEmail), eq(steps.date, date)));
     return stepsRecord || undefined;
+  }
+
+  async logAuditEvent(auditData: InsertAuditLog): Promise<AuditLog> {
+    const [auditLog] = await db
+      .insert(auditLogs)
+      .values(auditData)
+      .returning();
+    return auditLog;
   }
 }
 
