@@ -41,11 +41,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if password is correct - handle both hashed and plain text passwords
       let isPasswordValid = false;
       
-      try {
-        // Try bcrypt compare first (for new hashed passwords)
-        isPasswordValid = await bcrypt.compare(password, user.password);
-      } catch (error) {
-        // If bcrypt compare fails, try plain text comparison (for legacy users)
+      // Check if the stored password looks like a bcrypt hash (starts with $2b$ or similar)
+      const isBcryptHash = user.password.startsWith('$2b$') || user.password.startsWith('$2a$') || user.password.startsWith('$2y$');
+      
+      if (isBcryptHash) {
+        // This is a bcrypt hash, use bcrypt.compare with error handling
+        try {
+          isPasswordValid = await bcrypt.compare(password, user.password);
+        } catch (error) {
+          // If bcrypt.compare fails (malformed hash), treat as invalid credentials
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+      } else {
+        // This is likely a plain text password (legacy user)
         isPasswordValid = user.password === password;
         
         // If plain text password matches, hash it and update for security
