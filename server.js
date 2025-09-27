@@ -1,17 +1,21 @@
 // HealthStep - Healthcare Center Backend Server
-const express = require('express');
-const cors = require('cors');
-const session = require('express-session');
-const connectPgSimple = require('connect-pg-simple');
-const cookieParser = require('cookie-parser');
-const bcrypt = require('bcrypt');
-const path = require('path');
-const { Pool } = require('pg');
-const { drizzle } = require('drizzle-orm/node-postgres');
-const { sql } = require('drizzle-orm');
-const { pgTable, text, varchar, integer, date, timestamp, boolean } = require('drizzle-orm/pg-core');
-const { eq, desc, and } = require('drizzle-orm');
-const { z } = require('zod');
+import express from 'express';
+import cors from 'cors';
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import cookieParser from 'cookie-parser';
+import bcrypt from 'bcrypt';
+import path from 'path';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
+import { pgTable, text, varchar, integer, date, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { eq, desc, and } from 'drizzle-orm';
+import { z } from 'zod';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Database schema
 const users = pgTable("users", {
@@ -414,4 +418,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('Healthcare center step tracking system ready!');
 });
 
-module.exports = app;
+export default app;
