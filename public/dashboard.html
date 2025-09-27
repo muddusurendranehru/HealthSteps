@@ -273,6 +273,7 @@
                 
                 // Get CSRF token for secure requests
                 await getCSRFToken();
+                console.log('[DEBUG] CSRF token after fetch:', csrfToken ? 'received' : 'missing');
                 
                 // Set today's date as default
                 document.getElementById('date').value = new Date().toISOString().split('T')[0];
