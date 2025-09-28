@@ -1,0 +1,109 @@
+CRITICAL: READ ENTIRE PROMPT BEFORE ANY ACTION. DO NOT START CODING UNTIL I CONFIRM THE PLAN.
+
+Current Situation:
+- We have a WORKING step tracker at: https://health-steps-homahealthcarecenter.replit.app
+- It's in production with real users and real data in Neon database
+- We want to connect it to our main site: https://homahealthcarecenter.in/
+- The "Start Tracking" button on main site should open our step tracker
+
+IMPORTANT CONSTRAINTS:
+1. DO NOT modify the existing step tracker code - it's working perfectly
+2. DO NOT change database structure - users are actively using it
+3. DO NOT break authentication - it's working
+4. DO NOT create new repos or apps - use existing one
+5. PRESERVE all current functionality
+
+STEP 1 - ANALYSIS (Do this first, show me results):
+- Check current file structure of HealthSteps app
+- List all HTML files in root
+- Show current authentication flow
+- Identify entry points (login.html, dashboard.html)
+- Check if we have CORS settings in server.js
+
+STEP 2 - PLAN (Present this plan, wait for approval):
+Option A: Simple Redirect
+- Main site button → Direct link to replit app
+- Users bookmark the replit URL
+- Pros: Zero risk, works immediately
+- Cons: Different domain visible
+
+Option B: Iframe Embed
+- Embed replit app in main site
+- Add CORS headers to allow embedding
+- Pros: Looks integrated
+- Cons: May have auth issues in iframe
+
+Option C: Subdomain Proxy
+- Setup steps.homahealthcarecenter.in → replit app
+- Reverse proxy configuration
+- Pros: Professional URL
+- Cons: Needs DNS setup
+
+STEP 3 - SAFEGUARDS (List these before any implementation):
+- Backup current working code
+- Test with single test user first
+- Keep original URLs working
+- Add rollback plan
+- Verify database connections remain intact
+
+CURRENT WORKING ELEMENTS (DO NOT BREAK):
+✅ Authentication (email/password)
+✅ Neon database connection
+✅ Steps data saving
+✅ User sessions
+✅ Production deployment
+
+POTENTIAL PAIN POINTS TO AVOID:
+❌ CORS errors between domains
+❌ Lost sessions during redirect
+❌ Broken database references
+❌ Authentication loops
+❌ Mixed content warnings (HTTPS)
+
+QUESTIONS TO ANSWER FIRST:
+1. Should users see replit domain or hide it?
+2. Single sign-on needed or separate login acceptable?
+3. Want to embed or redirect to app?
+4. Need to pass user data from main site?
+5. Browser compatibility requirements?
+
+DO NOT PROCEED WITH CODE UNTIL:
+1. You show me the analysis
+2. I approve the approach
+3. We agree on safeguards
+4. Backup is confirmed
+
+Remember: This app is WORKING in production with real healthcare data. We cannot afford 18 hours of debugging. Small, safe, incremental changes only.
+
+Type "READY TO ANALYZE" when you understand these requirements, then begin Step 1 only.
+Additional Context for You:
+Based on your screenshots, here are the safe connection options:
+Safest Option (Recommended):
+javascript// On homahealthcarecenter.in - Just add this to the button
+<a href="https://health-steps-homahealthcarecenter.replit.app" 
+   target="_blank" 
+   class="btn">
+   Start Tracking →
+</a>
+Why This Works:
+
+Zero risk to your working app
+No code changes to step tracker
+Works immediately
+Users can bookmark it
+No CORS issues
+
+If You Want Custom Domain:
+
+Buy domain: steps.homahealthcarecenter.in
+Point it to Replit app
+Replit handles the rest
+Cost: ~$10/year
+
+What NOT to Do:
+
+❌ Don't merge codebases
+❌ Don't create new authentication
+❌ Don't modify database
+❌ Don't use iframes (authentication will break)
+❌ Don't rebuild from scratch
