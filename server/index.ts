@@ -10,14 +10,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // FORCE SINGAPORE PRODUCTION DATABASE (90-day health tracking)
+// This ALWAYS uses Singapore database, regardless of environment
 const SINGAPORE_DB = 'postgresql://neondb_owner:npg_Bl9kug4wxKzN@ep-weathered-paper-a1mbh5zv-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
 
-// Session store
+console.log('[DATABASE] Using Singapore production database');
+console.log('[DATABASE] Connection:', SINGAPORE_DB.split('@')[1].split('/')[0]);
+
+// Session store - MUST use Singapore database
 const PgSession = connectPgSimple(session);
 const sessionStore = new PgSession({
-  conString: SINGAPORE_DB, // Use Singapore production database
-  createTableIfMissing: false, // Don't create table if it exists
-  tableName: 'user_sessions', // Use different table name
+  conString: SINGAPORE_DB, // Force Singapore production database
+  createTableIfMissing: true, // Create session table if missing
+  tableName: 'user_sessions',
 });
 
 // Middleware
