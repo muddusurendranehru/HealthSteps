@@ -7,7 +7,7 @@ import { insertUserSchema, insertStepSchema } from '../shared/schema.js';
 // Extend session interface
 declare module 'express-session' {
   interface SessionData {
-    userId?: string;
+    userId?: number;
   }
 }
 
@@ -26,12 +26,13 @@ export function createRoutes(storage: IStorage) {
         return res.status(400).json({ error: 'User already exists' });
       }
 
-      // Hash password
+      // Hash password and map to passwordHash
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
+      const { password, ...userDataWithoutPassword } = userData;
       const user = await storage.createUser({
-        ...userData,
-        password: hashedPassword,
+        ...userDataWithoutPassword,
+        passwordHash: hashedPassword,
       });
 
       // Store user session
@@ -58,7 +59,7 @@ export function createRoutes(storage: IStorage) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      const validPassword = await bcrypt.compare(password, user.password);
+      const validPassword = await bcrypt.compare(password, user.passwordHash);
       if (!validPassword) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }

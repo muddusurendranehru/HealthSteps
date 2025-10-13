@@ -4,13 +4,13 @@ export interface IStorage {
   // User operations
   createUser(userData: InsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | null>;
-  getUserById(id: string): Promise<User | null>;
+  getUserById(id: number): Promise<User | null>;
 
   // Step operations
   createStep(stepData: InsertStep): Promise<Step>;
-  getStepsByUserId(userId: string): Promise<Step[]>;
-  getStepByUserAndDate(userId: string, date: string): Promise<Step | null>;
-  updateStep(id: string, stepCount: number): Promise<Step>;
+  getStepsByUserId(userId: number): Promise<Step[]>;
+  getStepByUserAndDate(userId: number, date: string): Promise<Step | null>;
+  updateStep(id: number, stepCount: number): Promise<Step>;
 }
 
 // Database storage implementation
@@ -39,7 +39,7 @@ export class DatabaseStorage implements IStorage {
     return result[0] || null;
   }
 
-  async getUserById(id: string): Promise<User | null> {
+  async getUserById(id: number): Promise<User | null> {
     const result = await this.db.select().from(users).where(eq(users.id, id));
     return result[0] || null;
   }
@@ -49,17 +49,17 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getStepsByUserId(userId: string): Promise<Step[]> {
+  async getStepsByUserId(userId: number): Promise<Step[]> {
     return this.db.select().from(steps).where(eq(steps.userId, userId));
   }
 
-  async getStepByUserAndDate(userId: string, date: string): Promise<Step | null> {
+  async getStepByUserAndDate(userId: number, date: string): Promise<Step | null> {
     const result = await this.db.select().from(steps)
       .where(and(eq(steps.userId, userId), eq(steps.date, date)));
     return result[0] || null;
   }
 
-  async updateStep(id: string, stepCount: number): Promise<Step> {
+  async updateStep(id: number, stepCount: number): Promise<Step> {
     const result = await this.db.update(steps)
       .set({ stepCount })
       .where(eq(steps.id, id))
