@@ -9,10 +9,13 @@ import { createRoutes } from './routes.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// FORCE SINGAPORE PRODUCTION DATABASE (90-day health tracking)
+const SINGAPORE_DB = 'postgresql://neondb_owner:npg_Bl9kug4wxKzN@ep-weathered-paper-a1mbh5zv-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+
 // Session store
 const PgSession = connectPgSimple(session);
 const sessionStore = new PgSession({
-  conString: process.env.DATABASE_URL,
+  conString: SINGAPORE_DB, // Use Singapore production database
   createTableIfMissing: false, // Don't create table if it exists
   tableName: 'user_sessions', // Use different table name
 });

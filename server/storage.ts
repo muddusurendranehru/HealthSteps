@@ -23,8 +23,11 @@ export class DatabaseStorage implements IStorage {
   private db;
 
   constructor() {
+    // FORCE SINGAPORE PRODUCTION DATABASE (90-day health tracking)
+    const SINGAPORE_DB = 'postgresql://neondb_owner:npg_Bl9kug4wxKzN@ep-weathered-paper-a1mbh5zv-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+    
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: SINGAPORE_DB,
     });
     this.db = drizzle(pool);
   }
