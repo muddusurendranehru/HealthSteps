@@ -16,6 +16,48 @@
             </div>
         </div>
 
+        <!-- SPEEDOMETER GAUGE -->
+        <div class="speedometer-container">
+            <div class="speedometer-card">
+                <h2 style="text-align: center; margin-bottom: 10px; color: #333;">📊 Today's Steps Progress</h2>
+                <div class="gauge-wrapper">
+                    <svg id="speedometer" viewBox="0 0 200 120" style="width: 100%; max-width: 400px; height: auto; margin: 0 auto; display: block;">
+                        <!-- Background arc segments (color zones) -->
+                        <path id="redZone" d="" fill="none" stroke="#ff4444" stroke-width="12" opacity="0.3"/>
+                        <path id="orangeZone" d="" fill="none" stroke="#ff9500" stroke-width="12" opacity="0.3"/>
+                        <path id="blueZone" d="" fill="none" stroke="#4da6ff" stroke-width="12" opacity="0.3"/>
+                        <path id="greenZone" d="" fill="none" stroke="#4caf50" stroke-width="12" opacity="0.3"/>
+                        
+                        <!-- Active progress arc -->
+                        <path id="progressArc" d="" fill="none" stroke-width="12" stroke-linecap="round"/>
+                        
+                        <!-- Center circle -->
+                        <circle cx="100" cy="100" r="8" fill="#333"/>
+                        
+                        <!-- Needle -->
+                        <line id="needle" x1="100" y1="100" x2="100" y2="40" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="100" cy="100" r="5" fill="#fff" stroke="#333" stroke-width="2"/>
+                        
+                        <!-- Labels -->
+                        <text x="20" y="110" font-size="10" fill="#666">0</text>
+                        <text x="45" y="70" font-size="10" fill="#666">5K</text>
+                        <text x="95" y="45" font-size="10" fill="#666">10K</text>
+                        <text x="150" y="70" font-size="10" fill="#666">12K</text>
+                        <text x="175" y="110" font-size="10" fill="#666">14K</text>
+                    </svg>
+                    
+                    <!-- Digital display -->
+                    <div style="text-align: center; margin-top: 10px;">
+                        <div id="stepsDisplay" style="font-size: 36px; font-weight: bold; color: #333;">0</div>
+                        <div style="font-size: 14px; color: #666; margin-top: 5px;">steps today</div>
+                        <div id="stepsStatus" style="font-size: 16px; font-weight: bold; margin-top: 10px; padding: 8px; border-radius: 20px; display: inline-block;">
+                            🔴 Getting Started
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="grid">
             <!-- Add Steps Card -->
             <div class="card add-steps">

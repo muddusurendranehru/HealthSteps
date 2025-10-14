@@ -634,3 +634,44 @@ input:focus {
         color: #8b5cf6;
     }
 }
+
+/* Speedometer Gauge Styles */
+.speedometer-container {
+    margin: 20px 0;
+    padding: 0 10px;
+}
+
+.speedometer-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.gauge-wrapper {
+    position: relative;
+}
+
+#speedometer {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+#needle {
+    transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-origin: 100px 100px;
+}
+
+#progressArc {
+    transition: stroke 0.5s ease, d 0.8s ease;
+}
+
+#stepsDisplay {
+    font-family: 'Courier New', monospace;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+#stepsStatus {
+    transition: all 0.5s ease;
+}

@@ -1,4 +1,5 @@
 // HealthStep - Healthcare Center Backend Server
+import 'dotenv/config';  // Load environment variables from .env file
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
@@ -9,7 +10,7 @@ import path from 'path';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import { pgTable, text, varchar, integer, date, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, integer, date, timestamp, boolean, serial } from 'drizzle-orm/pg-core';
 import { eq, desc, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { fileURLToPath } from 'url';
@@ -17,37 +18,47 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Database schema
+// Database schema - FIXED to match actual Neon database
 const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").notNull().unique(),
-  password: text("password").notNull(),
+  id: integer("id").primaryKey().notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  username: varchar("username", { length: 100 }),
+  fullName: varchar("full_name", { length: 255 }),
+  age: integer("age"),
+  weightKg: varchar("weight_kg"),
+  heightCm: integer("height_cm"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 const steps = pgTable("steps", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userEmail: varchar("user_email").notNull(),
+  id: integer("id").primaryKey().notNull(),
+  userEmail: varchar("user_email", { length: 255 }).notNull(),
   steps: integer("steps").notNull(),
   date: date("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull(),
 });
 
-const auditLogs = pgTable("audit_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-  ip: varchar("ip"),
-  userAgent: text("user_agent"),
-  method: varchar("method").notNull(),
-  path: varchar("path").notNull(),
-  userId: varchar("user_id"),
-  userEmail: varchar("user_email"),
-  statusCode: integer("status_code").notNull(),
-  success: boolean("success").notNull(),
-  sessionId: varchar("session_id"),
-  metadata: text("metadata")
-});
+// Audit logs table - COMMENTED OUT (doesn't exist in database)
+// If you want audit logging, create this table in Neon first:
+// CREATE TABLE audit_logs (
+//   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+//   timestamp TIMESTAMP DEFAULT NOW() NOT NULL,
+//   ip VARCHAR,
+//   user_agent TEXT,
+//   method VARCHAR NOT NULL,
+//   path VARCHAR NOT NULL,
+//   user_id VARCHAR,
+//   user_email VARCHAR,
+//   status_code INTEGER NOT NULL,
+//   success BOOLEAN NOT NULL,
+//   session_id VARCHAR,
+//   metadata TEXT
+// );
+
+const auditLogs = null; // Disabled until table is created
 
 // Validation schemas
 const insertUserSchema = z.object({
@@ -71,7 +82,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-const db = drizzle(pool, { schema: { users, steps, auditLogs } });
+const db = drizzle(pool, { schema: { users, steps } });
 
 // Database storage layer
 class DatabaseStorage {
@@ -96,7 +107,7 @@ class DatabaseStorage {
   async updateUserPassword(userId, hashedPassword) {
     await db
       .update(users)
-      .set({ password: hashedPassword })
+      .set({ passwordHash: hashedPassword })
       .where(eq(users.id, userId));
   }
 
@@ -105,10 +116,11 @@ class DatabaseStorage {
     const existingSteps = await this.getStepsByUserAndDate(stepsData.userEmail, stepsData.date);
     
     if (existingSteps) {
-      // Update existing entry
+      // ADD to existing steps (cumulative total for the day)
+      const newTotal = existingSteps.steps + stepsData.steps;
       const [updatedSteps] = await db
         .update(steps)
-        .set({ steps: stepsData.steps })
+        .set({ steps: newTotal })
         .where(eq(steps.id, existingSteps.id))
         .returning();
       return updatedSteps;
@@ -139,11 +151,10 @@ class DatabaseStorage {
   }
 
   async logAuditEvent(auditData) {
-    const [auditLog] = await db
-      .insert(auditLogs)
-      .values(auditData)
-      .returning();
-    return auditLog;
+    // Audit logging disabled - table doesn't exist in database
+    // To enable: Create audit_logs table in Neon first
+    console.log('[AUDIT] Logging disabled - audit_logs table not found');
+    return null;
   }
 }
 
@@ -199,7 +210,9 @@ app.use(session({
   }
 }));
 
-// Healthcare audit logging middleware with persistent storage
+// Healthcare audit logging middleware - DISABLED (audit_logs table doesn't exist)
+// To enable: Create audit_logs table in Neon first, then uncomment this
+/*
 app.use((req, res, next) => {
   const originalSend = res.send;
   
@@ -239,6 +252,7 @@ app.use((req, res, next) => {
   
   next();
 });
+*/
 
 // Serve static files from root directory
 app.use(express.static('.'));
@@ -260,7 +274,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
-    const user = await storage.createUser({ email, password: hashedPassword });
+    const user = await storage.createUser({ email, passwordHash: hashedPassword });
     res.json({ id: user.id, email: user.email });
   } catch (error) {
     console.error("Signup error:", error);
@@ -281,11 +295,11 @@ app.post('/api/auth/login', async (req, res) => {
     let isPasswordValid = false;
     
     // Check if the stored password looks like a bcrypt hash
-    if (user.password.startsWith('$2b$') || user.password.startsWith('$2a$') || user.password.startsWith('$2y$')) {
-      isPasswordValid = await bcrypt.compare(password, user.password);
-    } else {
+    if (user.passwordHash && (user.passwordHash.startsWith('$2b$') || user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2y$'))) {
+      isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    } else if (user.passwordHash) {
       // Fallback for plain text passwords (development/migration)
-      isPasswordValid = password === user.password;
+      isPasswordValid = password === user.passwordHash;
       
       // If plain text password matches, hash it for future use
       if (isPasswordValid) {
