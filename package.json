@@ -5,10 +5,12 @@
   "license": "MIT",
   "scripts": {
     "dev": "node server.js",
-    "start": "NODE_ENV=production node server.js",
-    "build": "echo 'No build needed - using server.js directly'",
-    "check": "echo 'TypeScript checking disabled - using JavaScript'",
-    "db:push": "drizzle-kit push"
+    "start": "node server.js",
+    "build": "echo 'No build needed - using server.js directly'"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
