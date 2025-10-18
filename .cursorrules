@@ -1,0 +1,138 @@
+# Project: Heart Database Application
+# Stack: Neon PostgreSQL + Backend + Frontend
+
+## Core Rules
+
+1. DATABASE FIRST - HEART OF THE PROJECT
+   - Use Neon PostgreSQL as the database
+   - Database name: "heart" (or "neondb" for this project)
+   - Must have exactly 2 tables in the heart database: `users` and `steps`
+   - Tables must display their content (implement data viewing)
+   - All tables use INTEGER (SERIAL) as primary key with auto-increment
+   - Example table structure:
+```sql
+     CREATE TABLE table_name (
+       id INTEGER PRIMARY KEY DEFAULT nextval('table_name_id_seq'),
+       created_at TIMESTAMP DEFAULT NOW(),
+       -- other fields
+     );
+```
+
+2. BUILD ORDER - BACKEND FIRST
+   - Complete and test backend fully before starting frontend
+   - Backend must be 100% working and successful
+   - Only after backend success, proceed to frontend development
+
+3. AUTHENTICATION SYSTEM
+   
+   Sign Up page requires:
+   - Email field
+   - Password field
+   - Confirm Password field
+   
+   Login page requires:
+   - Email field
+   - Password field
+   
+   - After successful login → redirect to Dashboard
+   - Implement proper middleware for auth protection
+   - Use bcrypt for password hashing
+
+4. MIDDLEWARE & ALIGNMENT
+   - Frontend must align with backend endpoints
+   - Protect routes with authentication middleware
+   - INTEGER handling must be consistent between frontend/backend
+   - Validate user sessions on protected routes
+
+5. DASHBOARD FEATURES (Post-Login)
+   User must be able to:
+   - INSERT data into tables
+   - FETCH/view data from tables
+   - LOGOUT functionality
+
+## Implementation Checklist
+
+### Phase 1: Database (Neon)
+- ✅ Set up Neon PostgreSQL database named "heart"/"neondb"
+- ✅ Create 2 tables with INTEGER primary keys (users, steps)
+- ✅ Test database connection
+- ✅ Implement queries to display table contents
+
+### Phase 2: Backend
+- ✅ Set up backend framework (Node.js/Express)
+- ✅ Configure Neon database connection
+- ✅ Create auth endpoints:
+  - POST /api/auth/signup (email, password, confirmPassword)
+  - POST /api/auth/login (email, password)
+  - POST /api/auth/logout
+- ✅ Create data endpoints:
+  - POST /api/steps (insert)
+  - GET /api/steps (fetch)
+- ✅ Implement authentication middleware
+- ✅ Hash passwords (use bcrypt)
+- ✅ Generate sessions with express-session
+- ✅ Test all endpoints thoroughly
+- ✅ STOP - Do not proceed until backend is 100% working
+
+### Phase 3: Frontend (Only after backend success)
+- ✅ Create Sign Up page (3 fields: email, password, confirm)
+- ✅ Create Login page (2 fields: email, password)
+- ✅ Create Dashboard page with:
+  - Insert form
+  - Data display/fetch section
+  - Logout button
+- ✅ Implement protected routes
+- ✅ Store auth tokens/sessions properly
+- ✅ Handle INTEGER data types correctly
+- ✅ Align all API calls with backend endpoints
+
+## Code Standards
+
+- Use environment variables for database credentials
+- Handle errors gracefully
+- Validate inputs on both frontend and backend
+- Use INTEGER (SERIAL) for primary keys consistently (not UUID)
+- Implement proper password confirmation matching
+- Clear auth tokens on logout
+- Use express-session with PostgreSQL session store for security
+
+## Database Schema
+
+### Users Table
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY DEFAULT nextval('users_id_seq'),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  username VARCHAR(100),
+  full_name VARCHAR(255),
+  age INTEGER,
+  weight_kg NUMERIC(5,2),
+  height_cm INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Steps Table
+```sql
+CREATE TABLE steps (
+  id INTEGER PRIMARY KEY DEFAULT nextval('steps_id_seq'),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  user_email VARCHAR(255) NOT NULL,
+  steps INTEGER NOT NULL,
+  date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
+```
+
+## Technology Stack
+
+- **Database**: Neon PostgreSQL (Singapore region)
+- **Backend**: Node.js + Express
+- **ORM**: Drizzle ORM
+- **Session**: express-session with connect-pg-simple
+- **Authentication**: bcrypt for password hashing
+- **Frontend**: Vanilla HTML/CSS/JavaScript
+- **Primary Key Type**: INTEGER (SERIAL with auto-increment)
+

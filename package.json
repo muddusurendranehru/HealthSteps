@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "build": "echo 'No build needed - using server.js directly'"
+    "build": "echo 'No build needed - using server.js directly'",
+    "setup:db": "node setup_database.js",
+    "drop:db": "node drop_tables.js"
   },
   "engines": {
     "node": ">=18.0.0",
