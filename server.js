@@ -255,7 +255,8 @@ app.use((req, res, next) => {
 */
 
 // Serve static files from root directory
-app.use(express.static('.'));
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '.')));
 
 // API Routes
 
@@ -422,7 +423,10 @@ app.get('/api/steps', async (req, res) => {
 
 // Catch-all handler for SPA routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  // Only serve index.html if it's not an API route or static file
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  }
 });
 
 // Start server
